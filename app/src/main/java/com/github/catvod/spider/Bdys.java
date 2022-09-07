@@ -112,7 +112,7 @@ public class Bdys01 extends Spider {
         OkHttpUtil.string(cookieurl,getHeaders(cookieurl,""),cookies);
         for( Map.Entry<String, List<String>> entry : cookies.entrySet() ){
             if(entry.getKey().equals("set-cookie")){
-                cookie = "Messi YYDS Forever 8K ;" + TextUtils.join(";",entry.getValue());
+                cookie = TextUtils.join(";",entry.getValue());
                 break;
             }
         }
@@ -399,6 +399,41 @@ public class Bdys01 extends Spider {
             JSONObject urlsrcobj = new JSONObject(urlsrc);
             JSONObject urldb = urlsrcobj.getJSONObject("data");
             List <String> urldblist = new ArrayList<>();
+            String realurl ="";
+            rspurl="";
+            if(!urldb.isNull("tos")){
+                String tos = urldb.optString("tos");
+                if(tos.equals("1")){
+                    t = System.currentTimeMillis();
+                    key = Misc.MD5(pid+"-"+t, StandardCharsets.UTF_8).substring(0,16);
+                    sg = encrypt(pid+"-"+t,key);
+                    geturl = siteUrl+"/god/"+pid+"?type=1";
+                    HashMap<String, String> hashMap2 = new HashMap();
+                    hashMap2.put("t", Long.toString(t));
+                    hashMap2.put("sg", sg);
+                    hashMap2.put("verifyCode", "888");
+                    OkHttpUtil.post(OkHttpUtil.defaultClient(), geturl, hashMap2,getHeaders(geturl,"origin") ,new OKCallBack.OKCallBackString() {
+                         @Override
+                         protected void onFailure(Call call, Exception exc) {
+                         }
+                         public void onResponse(String str) {
+                               try {
+                                    rspurl = new JSONObject(str).getString("url");
+                               } catch (JSONException e) {
+                                    e.printStackTrace();
+                               }
+                         }
+                    });
+                    if(rspurl.length()>0){
+                         realurl=rspurl;
+                         result.put("parse", 0);
+                         result.put("playUrl", "");
+                         result.put("url", realurl);
+                         result.put("header", "");
+                         return result.toString();
+                    }
+                }
+            }
             if(!urldb.isNull("url3")){
                 String url3 = urldb.optString("url3");
                 urldblist.add(url3);
@@ -415,7 +450,6 @@ public class Bdys01 extends Spider {
                 }
             }
             if(urldblist.isEmpty()){
-                rspurl="";
                 t = System.currentTimeMillis();
                 key = Misc.MD5(pid+"-"+t, StandardCharsets.UTF_8).substring(0,16);
                 sg = encrypt(pid+"-"+t,key);
@@ -431,47 +465,15 @@ public class Bdys01 extends Spider {
 
                     public void onResponse(String str) {
                         try {
-                            JSONObject rspobj = new JSONObject(str);
-                            if(rspobj.isNull("url")){
-                                rspurl="";
-                            }else {
-                                rspurl = rspobj.getString("url");
-                            }
-
+                            rspurl = new JSONObject(str).getString("url");
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
                     }
                 });
-                if(rspurl.isEmpty()){
-                    t = System.currentTimeMillis();
-                    key = Misc.MD5(pid+"-"+t, StandardCharsets.UTF_8).substring(0,16);
-                    sg = encrypt(pid+"-"+t,key);
-                    geturl = siteUrl+"/god/"+pid+"?type=1";
-                    HashMap<String, String> hashMap2 = new HashMap();
-                    hashMap2.put("t", Long.toString(t));
-                    hashMap2.put("sg", sg);
-                    hashMap2.put("verifyCode", "888");
-                    OkHttpUtil.post(OkHttpUtil.defaultClient(), geturl, hashMap2,getHeaders(geturl,"origin") ,new OKCallBack.OKCallBackString() {
-                        @Override
-                        protected void onFailure(Call call, Exception exc) {
-                        }
-
-                        public void onResponse(String str) {
-                            try {
-                                rspurl = new JSONObject(str).getString("url");
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    });
-                }
-                String realurl ="";
                 if(rspurl.contains("rkey")){
                     t = System.currentTimeMillis();
                     realurl =rspurl.replace("?rkey",t+".mp4?ver=6010&rkey");
-                }else if (rspurl.contains("ixigua")) {
-                    realurl = rspurl;
                 }else{
                     t = System.currentTimeMillis();
                     realurl = rspurl.replace("http:","https:") +"/"+t+".mp4";
