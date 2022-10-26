@@ -133,11 +133,20 @@ public class XPath extends Spider {
         return rule.getCateUrl().replace("{cateId}", tid).replace("{catePg}", pg);
     }
 
+    protected String categoryUrl2(String tid, String pg, boolean filter, HashMap<String, String> extend) {
+        return rule.getCateUrl2().replace("{cateId}", tid).replace("{catePg}", pg);
+    }
+
     @Override
     public String categoryContent(String tid, String pg, boolean filter, HashMap<String, String> extend) {
         try {
             fetchRule();
-            String webUrl = categoryUrl(tid, pg, filter, extend);
+            String webUrl = "";
+            if (!tid.startsWith("@")) {
+                webUrl = categoryUrl(tid, pg, filter, extend);
+            } else {
+                webUrl = categoryUrl2(tid.replace("@",""), pg, filter, extend);
+            }
             JSONArray videos = new JSONArray();
             JXDocument doc = JXDocument.create(fetch(webUrl));
             List<JXNode> vodNodes = doc.selN(rule.getCateVodNode());
@@ -337,7 +346,7 @@ public class XPath extends Spider {
             result.put("parse", 1);
             result.put("playUrl", "");
             if (!rule.getPlayUa().isEmpty()) {
-                result.put("ua", rule.getPlayUa());
+                result.put("header", rule.getPlayUa());
             }
             result.put("url", webUrl);
             return result.toString();
